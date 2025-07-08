@@ -1,0 +1,15 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html>
+  <body>
+    <h1>Sensor Dashboard</h1>
+    <p>Temperature: {{ temp }}</p>
+    <p>Pressure: {{ pressure }}</p>
+    <p>Voltage: {{ voltage }}</p>
+    <h2>Actuator State: {{ actuator }}</h2>
+    <form action="/actuate" method="post">
+      <button name="state" value="on">Turn ON</button>
+      <button name="state" value="off">Turn OFF</button>
+    </form>
+  </body>
+</html>

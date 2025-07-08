@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  sensor_temp:
+    build: ./sensor_temp
+    ports:
+      - "5001:5001"
+
+  sensor_pressure:
+    build: ./sensor_pressure
+    ports:
+      - "5002:5002"
+
+  sensor_voltage:
+    build: ./sensor_voltage
+    ports:
+      - "5003:5003"
+
+  actuator:
+    build: ./actuator
+    ports:
+      - "5004:5004"
+
+  ui:
+    build: ./ui
+    ports:
+      - "5000:5000"
+    depends_on:
+      - sensor_temp
+      - sensor_pressure
+      - sensor_voltage
+      - actuator
