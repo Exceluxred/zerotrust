@@ -10,27 +10,19 @@
       background: #f5f7fa;
       color: #333;
     }
-
-
     header {
       background: #007bff;
       color: #fff;
       padding: 20px;
       text-align: center;
     }
-
-
     header h1 {
       margin: 0 0 10px 0;
       font-size: 2rem;
     }
-
-
     nav {
       margin-top: 10px;
     }
-
-
     nav button {
       background: #0056b3;
       color: #fff;
@@ -41,13 +33,9 @@
       cursor: pointer;
       font-size: 1rem;
     }
-
-
     nav button:hover {
       background: #003d80;
     }
-
-
     main {
       max-width: 1200px;
       margin: 30px auto;
@@ -56,26 +44,17 @@
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-
-
     .section {
       display: none;
     }
-
-
     .section.active {
       display: block;
     }
-
-
-    /* Dashboard styling */
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
       gap: 20px;
     }
-
-
     .card {
       background: #fff;
       border-radius: 8px;
@@ -83,33 +62,23 @@
       padding: 20px;
       text-align: center;
     }
-
-
     .card h2 {
       margin: 0;
       font-size: 1.2rem;
       color: #666;
     }
-
-
     .card p {
       font-size: 2rem;
       margin: 10px 0 0;
     }
-
-
     .unit {
       font-size: 1rem;
       color: #999;
     }
-
-
     .actions {
       text-align: center;
       margin-top: 30px;
     }
-
-
     .actions button {
       background: #007bff;
       color: #fff;
@@ -120,21 +89,14 @@
       cursor: pointer;
       transition: background 0.3s;
     }
-
-
     .actions button:hover {
       background: #0056b3;
     }
-
-
-    /* Control panel styling */
     label {
       display: block;
       margin: 20px 0 10px;
       font-weight: bold;
     }
-
-
     select, input {
       width: 100%;
       padding: 12px;
@@ -142,48 +104,33 @@
       border-radius: 5px;
       font-size: 1rem;
     }
-
-
     .control-panel button {
       margin-top: 30px;
       width: 100%;
     }
-
-
     #response {
       margin-top: 20px;
       font-weight: bold;
       color: green;
       text-align: center;
     }
-
-
-    /* Audit logs styling */
     table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 20px;
     }
-
-
     th, td {
       padding: 12px 15px;
       border-bottom: 1px solid #ddd;
       text-align: left;
     }
-
-
     th {
       background: #007bff;
       color: #fff;
     }
-
-
     tr:hover {
       background: #f1f1f1;
     }
-
-
     footer {
       text-align: center;
       font-size: 0.9rem;
@@ -194,7 +141,6 @@
 </head>
 <body>
 
-
   <header>
     <h1>Zero Trust CPS Operator UI</h1>
     <nav>
@@ -203,7 +149,6 @@
       <button onclick="showSection('logs')">Audit Logs</button>
     </nav>
   </header>
-
 
   <main>
     <!-- Dashboard Section -->
@@ -215,13 +160,11 @@
           <span class="unit">°C</span>
         </div>
 
-
         <div class="card">
           <h2>Pressure</h2>
           <p id="pressure-value">--</p>
           <span class="unit">bar</span>
         </div>
-
 
         <div class="card">
           <h2>Voltage</h2>
@@ -229,43 +172,34 @@
           <span class="unit">V</span>
         </div>
 
-
         <div class="card">
           <h2>Actuator Status</h2>
           <p id="actuator-status">--</p>
         </div>
       </div>
 
-
       <div class="actions">
         <button onclick="refreshDashboard()">Refresh Data</button>
       </div>
     </div>
 
-
     <!-- Control Panel Section -->
     <div id="control" class="section control-panel">
       <h2>Manual Actuator Control</h2>
 
-
       <label for="action-select">Select Action:</label>
       <select id="action-select">
         <option value="">-- Choose an action --</option>
-        <option value="on">Turn Actuator ON</option>
-        <option value="off">Turn Actuator OFF</option>
+        <option value="toggle">Toggle Actuator</option>
       </select>
-
 
       <label for="operator-token">Operator Token:</label>
       <input type="password" id="operator-token" placeholder="Enter your secure token" />
 
-
       <button onclick="submitCommand()">Submit Command</button>
-
 
       <div id="response"></div>
     </div>
-
 
     <!-- Audit Logs Section -->
     <div id="logs" class="section">
@@ -281,10 +215,8 @@
           </tr>
         </thead>
         <tbody id="logs-body">
-          <!-- Log rows -->
         </tbody>
       </table>
-
 
       <div class="actions">
         <button onclick="loadLogs()">Refresh Logs</button>
@@ -292,11 +224,9 @@
     </div>
   </main>
 
-
   <footer>
     &copy; 2025 Zero Trust CPS Project | All Rights Reserved
   </footer>
-
 
   <script>
     function showSection(sectionId) {
@@ -307,40 +237,73 @@
       }
     }
 
-
     function refreshDashboard() {
-      document.getElementById('temp-value').textContent = Math.floor(Math.random() * 100);
-      document.getElementById('pressure-value').textContent = (Math.random() * 2).toFixed(2);
-      document.getElementById('voltage-value').textContent = 220 + Math.floor(Math.random() * 10);
-      document.getElementById('actuator-status').textContent = Math.random() > 0.5 ? 'ON' : 'OFF';
-    }
+      fetch("http://localhost:5001/read")
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("temp-value").textContent = data.temperature ?? '--';
+        })
+        .catch(() => {
+          document.getElementById("temp-value").textContent = 'ERR';
+        });
 
+      fetch("http://localhost:5002/read")
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("pressure-value").textContent = data.pressure ?? '--';
+        })
+        .catch(() => {
+          document.getElementById("pressure-value").textContent = 'ERR';
+        });
+
+      fetch("http://localhost:5003/read")
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("voltage-value").textContent = data.voltage ?? '--';
+        })
+        .catch(() => {
+          document.getElementById("voltage-value").textContent = 'ERR';
+        });
+
+      fetch("http://localhost:5004/status")
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("actuator-status").textContent = data.status ?? '--';
+        })
+        .catch(() => {
+          document.getElementById("actuator-status").textContent = 'ERR';
+        });
+    }
 
     function submitCommand() {
       const action = document.getElementById('action-select').value;
       const token = document.getElementById('operator-token').value;
       const response = document.getElementById('response');
 
-
       if (!action) {
         alert("Please select an action.");
         return;
       }
-
 
       if (!token) {
         alert("Please enter your operator token.");
         return;
       }
 
-
-      console.log(`Sending command: ${action}, Token: ${token}`);
-
-
-      response.style.color = 'green';
-      response.textContent = `✅ Command '${action.toUpperCase()}' submitted successfully and verified with Zero Trust policy.`;
+      fetch("http://localhost:5004/toggle", {
+        method: "POST"
+      })
+        .then(res => res.json())
+        .then(data => {
+          response.style.color = 'green';
+          response.textContent = `✅ Actuator toggled to '${data.status}'`;
+          refreshDashboard();
+        })
+        .catch(() => {
+          response.style.color = 'red';
+          response.textContent = "❌ Failed to toggle actuator.";
+        });
     }
-
 
     function loadLogs() {
       const logs = [
@@ -370,10 +333,8 @@
         }
       ];
 
-
       const tbody = document.getElementById("logs-body");
       const logCount = document.getElementById("log-count");
-
 
       tbody.innerHTML = "";
       logs.forEach(log => {
@@ -388,15 +349,12 @@
         tbody.innerHTML += row;
       });
 
-
       logCount.textContent = `${logs.length} logs loaded.`;
     }
 
-
-    // Load dashboard data by default
+    // Load dashboard on page load
     refreshDashboard();
   </script>
-
 
 </body>
 </html>

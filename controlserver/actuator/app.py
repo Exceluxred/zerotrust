@@ -1,8 +1,17 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
+
 
 state = {"status": "OFF"}
+
+
+@app.route("/")
+def get_index():
+    return "hello from actuator server"
+
 
 @app.route("/status")
 def get_status():
