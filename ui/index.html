@@ -334,11 +334,11 @@
       }
 
 
-      console.log(Sending command: ${action}, Token: ${token});
+      console.log(`Sending command: ${action}, Token: ${token}`);
 
 
       response.style.color = 'green';
-      response.textContent = ✅ Command '${action.toUpperCase()}' submitted successfully and verified with Zero Trust policy.;
+      response.textContent = `✅ Command '${action.toUpperCase()}' submitted successfully and verified with Zero Trust policy.`;
     }
 
 
@@ -377,19 +377,19 @@
 
       tbody.innerHTML = "";
       logs.forEach(log => {
-        const row = 
+        const row = `
           <tr>
             <td>${log.timestamp}</td>
             <td>${log.action}</td>
             <td>${log.operator}</td>
             <td>${log.details}</td>
           </tr>
-        ;
+        `;
         tbody.innerHTML += row;
       });
 
 
-      logCount.textContent = ${logs.length} logs loaded.;
+      logCount.textContent = `${logs.length} logs loaded.`;
     }
 
 
