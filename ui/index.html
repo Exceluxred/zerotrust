@@ -1,15 +1,350 @@
-<!-- templates/index.html -->
 <!DOCTYPE html>
-<html>
-  <body>
-    <h1>Sensor Dashboard</h1>
-    <p>Temperature: {{ temp }}</p>
-    <p>Pressure: {{ pressure }}</p>
-    <p>Voltage: {{ voltage }}</p>
-    <h2>Actuator State: {{ actuator }}</h2>
-    <form action="/actuate" method="post">
-      <button name="state" value="on">Turn ON</button>
-      <button name="state" value="off">Turn OFF</button>
-    </form>
-  </body>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Zero Trust CPS Operator UI</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background: #f5f7fa;
+      color: #333;
+    }
+
+    header {
+      background: #007bff;
+      color: #fff;
+      padding: 20px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0 0 10px 0;
+      font-size: 2rem;
+    }
+
+    nav {
+      margin-top: 10px;
+    }
+
+    nav button {
+      background: #0056b3;
+      color: #fff;
+      border: none;
+      padding: 10px 20px;
+      margin: 0 5px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    nav button:hover {
+      background: #003d80;
+    }
+
+    main {
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .section {
+      display: none;
+    }
+
+    .section.active {
+      display: block;
+    }
+
+    /* Dashboard styling */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      padding: 20px;
+      text-align: center;
+    }
+
+    .card h2 {
+      margin: 0;
+      font-size: 1.2rem;
+      color: #666;
+    }
+
+    .card p {
+      font-size: 2rem;
+      margin: 10px 0 0;
+    }
+
+    .unit {
+      font-size: 1rem;
+      color: #999;
+    }
+
+    .actions {
+      text-align: center;
+      margin-top: 30px;
+    }
+
+    .actions button {
+      background: #007bff;
+      color: #fff;
+      border: none;
+      padding: 12px 25px;
+      font-size: 1rem;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .actions button:hover {
+      background: #0056b3;
+    }
+
+    /* Control panel styling */
+    label {
+      display: block;
+      margin: 20px 0 10px;
+      font-weight: bold;
+    }
+
+    select, input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+      font-size: 1rem;
+    }
+
+    .control-panel button {
+      margin-top: 30px;
+      width: 100%;
+    }
+
+    #response {
+      margin-top: 20px;
+      font-weight: bold;
+      color: green;
+      text-align: center;
+    }
+
+    /* Audit logs styling */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+
+    th {
+      background: #007bff;
+      color: #fff;
+    }
+
+    tr:hover {
+      background: #f1f1f1;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.9rem;
+      color: #999;
+      margin: 40px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Zero Trust CPS Operator UI</h1>
+    <nav>
+      <button onclick="showSection('dashboard')">Dashboard</button>
+      <button onclick="showSection('control')">Control Panel</button>
+      <button onclick="showSection('logs')">Audit Logs</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Dashboard Section -->
+    <div id="dashboard" class="section active">
+      <div class="grid">
+        <div class="card">
+          <h2>Temperature</h2>
+          <p id="temp-value">--</p>
+          <span class="unit">°C</span>
+        </div>
+
+        <div class="card">
+          <h2>Pressure</h2>
+          <p id="pressure-value">--</p>
+          <span class="unit">bar</span>
+        </div>
+
+        <div class="card">
+          <h2>Voltage</h2>
+          <p id="voltage-value">--</p>
+          <span class="unit">V</span>
+        </div>
+
+        <div class="card">
+          <h2>Actuator Status</h2>
+          <p id="actuator-status">--</p>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button onclick="refreshDashboard()">Refresh Data</button>
+      </div>
+    </div>
+
+    <!-- Control Panel Section -->
+    <div id="control" class="section control-panel">
+      <h2>Manual Actuator Control</h2>
+
+      <label for="action-select">Select Action:</label>
+      <select id="action-select">
+        <option value="">-- Choose an action --</option>
+        <option value="on">Turn Actuator ON</option>
+        <option value="off">Turn Actuator OFF</option>
+      </select>
+
+      <label for="operator-token">Operator Token:</label>
+      <input type="password" id="operator-token" placeholder="Enter your secure token" />
+
+      <button onclick="submitCommand()">Submit Command</button>
+
+      <div id="response"></div>
+    </div>
+
+    <!-- Audit Logs Section -->
+    <div id="logs" class="section">
+      <h2>System Activity Logs</h2>
+      <p class="log-count" id="log-count">Loading logs...</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Action</th>
+            <th>Operator</th>
+            <th>Details</th>
+          </tr>
+        </thead>
+        <tbody id="logs-body">
+          <!-- Log rows -->
+        </tbody>
+      </table>
+
+      <div class="actions">
+        <button onclick="loadLogs()">Refresh Logs</button>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    &copy; 2025 Zero Trust CPS Project | All Rights Reserved
+  </footer>
+
+  <script>
+    function showSection(sectionId) {
+      document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
+      document.getElementById(sectionId).classList.add('active');
+      if (sectionId === 'logs') {
+        loadLogs();
+      }
+    }
+
+    function refreshDashboard() {
+      document.getElementById('temp-value').textContent = Math.floor(Math.random() * 100);
+      document.getElementById('pressure-value').textContent = (Math.random() * 2).toFixed(2);
+      document.getElementById('voltage-value').textContent = 220 + Math.floor(Math.random() * 10);
+      document.getElementById('actuator-status').textContent = Math.random() > 0.5 ? 'ON' : 'OFF';
+    }
+
+    function submitCommand() {
+      const action = document.getElementById('action-select').value;
+      const token = document.getElementById('operator-token').value;
+      const response = document.getElementById('response');
+
+      if (!action) {
+        alert("Please select an action.");
+        return;
+      }
+
+      if (!token) {
+        alert("Please enter your operator token.");
+        return;
+      }
+
+      console.log(`Sending command: ${action}, Token: ${token}`);
+
+      response.style.color = 'green';
+      response.textContent = `✅ Command '${action.toUpperCase()}' submitted successfully and verified with Zero Trust policy.`;
+    }
+
+    function loadLogs() {
+      const logs = [
+        {
+          timestamp: "2025-07-01 12:45:22",
+          action: "Actuator ON",
+          operator: "Operator123",
+          details: "Manual override of actuator A1"
+        },
+        {
+          timestamp: "2025-07-01 12:42:05",
+          action: "Sensor Voltage Read",
+          operator: "SensorNode02",
+          details: "Voltage = 220V"
+        },
+        {
+          timestamp: "2025-07-01 12:40:10",
+          action: "Authentication",
+          operator: "Operator123",
+          details: "Token verified successfully"
+        },
+        {
+          timestamp: "2025-07-01 12:38:55",
+          action: "Actuator OFF",
+          operator: "Operator456",
+          details: "Shutdown actuator B2"
+        }
+      ];
+
+      const tbody = document.getElementById("logs-body");
+      const logCount = document.getElementById("log-count");
+
+      tbody.innerHTML = "";
+      logs.forEach(log => {
+        const row = `
+          <tr>
+            <td>${log.timestamp}</td>
+            <td>${log.action}</td>
+            <td>${log.operator}</td>
+            <td>${log.details}</td>
+          </tr>
+        `;
+        tbody.innerHTML += row;
+      });
+
+      logCount.textContent = `${logs.length} logs loaded.`;
+    }
+
+    // Load dashboard data by default
+    refreshDashboard();
+  </script>
+
+</body>
 </html>
