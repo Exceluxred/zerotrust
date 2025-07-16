@@ -2,7 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>Zero Trust CPS Operator UI</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Zero Trust CPS UI</title>
   <style>
     body {
       margin: 0;
@@ -35,6 +37,12 @@
     }
     nav button:hover {
       background: #003d80;
+    }
+    .logout-btn {
+      background: #dc3545 !important;
+    }
+    .logout-btn:hover {
+      background: #b02a37 !important;
     }
     main {
       max-width: 1200px;
@@ -104,15 +112,14 @@
       border-radius: 5px;
       font-size: 1rem;
     }
-    .control-panel button {
-      margin-top: 30px;
-      width: 100%;
-    }
     #response {
       margin-top: 20px;
       font-weight: bold;
       color: green;
       text-align: center;
+    }
+    .error {
+      color: red !important;
     }
     table {
       width: 100%;
@@ -137,224 +144,289 @@
       color: #999;
       margin: 40px 0;
     }
+    .login-container {
+      max-width: 400px;
+      margin: 50px auto;
+    }
+    .login-card {
+      padding: 20px;
+    }
   </style>
 </head>
 <body>
-
-  <header>
-    <h1>Zero Trust CPS Operator UI</h1>
-    <nav>
-      <button onclick="showSection('dashboard')">Dashboard</button>
-      <button onclick="showSection('control')">Control Panel</button>
-      <button onclick="showSection('logs')">Audit Logs</button>
-    </nav>
-  </header>
-
-  <main>
-    <!-- Dashboard Section -->
-    <div id="dashboard" class="section active">
-      <div class="grid">
-        <div class="card">
-          <h2>Temperature</h2>
-          <p id="temp-value">--</p>
-          <span class="unit">°C</span>
+  <!-- Login Section -->
+  <div id="login" class="section active">
+    <div class="login-container">
+      <div class="card login-card">
+        <h2>Zero Trust Authentication</h2>
+        <div>
+          <label for="login-username">Username:</label>
+          <input type="text" id="login-username" placeholder="Enter username"/>
+          <label for="login-password">Password:</label>
+          <input type="password" id="login-password" placeholder="Enter password"/>
+          <button onclick="performLogin()" class="actions">Login</button>
+          <div id="login-error" class="error"></div>
         </div>
+      </div>
+    </div>
+  </div>
 
-        <div class="card">
-          <h2>Pressure</h2>
-          <p id="pressure-value">--</p>
-          <span class="unit">bar</span>
+  <!-- Main Application -->
+  <div id="app" class="section">
+    <header>
+      <h1 id="ui-heading">Zero Trust CPS UI</h1>
+      <nav>
+        <button onclick="showSection('dashboard')">Dashboard</button>
+        <button id="control-btn" onclick="showSection('control')">Control Panel</button>
+        <button id="logs-btn" onclick="showSection('logs')">Audit Logs</button>
+        <button onclick="logout()" class="logout-btn">Logout</button>
+      </nav>
+    </header>
+
+    <main>
+      <!-- Dashboard Section -->
+      <div id="dashboard" class="section active">
+        <div class="grid">
+          <div class="card">
+            <h2>Temperature</h2>
+            <p id="temp-value">--</p>
+            <span class="unit">°C</span>
+          </div>
+          <div class="card">
+            <h2>Pressure</h2>
+            <p id="pressure-value">--</p>
+            <span class="unit">bar</span>
+          </div>
+          <div class="card">
+            <h2>Voltage</h2>
+            <p id="voltage-value">--</p>
+            <span class="unit">V</span>
+          </div>
+          <div class="card">
+            <h2>Actuator Status</h2>
+            <p id="actuator-status">--</p>
+          </div>
         </div>
-
-        <div class="card">
-          <h2>Voltage</h2>
-          <p id="voltage-value">--</p>
-          <span class="unit">V</span>
-        </div>
-
-        <div class="card">
-          <h2>Actuator Status</h2>
-          <p id="actuator-status">--</p>
+        <div class="actions">
+          <button onclick="refreshDashboard()">Refresh Data</button>
         </div>
       </div>
 
-      <div class="actions">
-        <button onclick="refreshDashboard()">Refresh Data</button>
+      <!-- Control Panel Section -->
+      <div id="control" class="section">
+        <h2>Manual Actuator Control</h2>
+        <label for="action-select">Select Action:</label>
+        <select id="action-select">
+          <option value="">-- Choose an action --</option>
+          <option value="toggle">Toggle Actuator</option>
+        </select>
+        <div class="actions">
+          <button onclick="submitCommand()">Submit Command</button>
+        </div>
+        <div id="response"></div>
       </div>
-    </div>
 
-    <!-- Control Panel Section -->
-    <div id="control" class="section control-panel">
-      <h2>Manual Actuator Control</h2>
-
-      <label for="action-select">Select Action:</label>
-      <select id="action-select">
-        <option value="">-- Choose an action --</option>
-        <option value="toggle">Toggle Actuator</option>
-      </select>
-
-      <label for="operator-token">Operator Token:</label>
-      <input type="password" id="operator-token" placeholder="Enter your secure token" />
-
-      <button onclick="submitCommand()">Submit Command</button>
-
-      <div id="response"></div>
-    </div>
-
-    <!-- Audit Logs Section -->
-    <div id="logs" class="section">
-      <h2>System Activity Logs</h2>
-      <p class="log-count" id="log-count">Loading logs...</p>
-      <table>
-        <thead>
-          <tr>
-            <th>Timestamp</th>
-            <th>Action</th>
-            <th>Operator</th>
-            <th>Details</th>
-          </tr>
-        </thead>
-        <tbody id="logs-body">
-        </tbody>
-      </table>
-
-      <div class="actions">
-        <button onclick="loadLogs()">Refresh Logs</button>
+      <!-- Audit Logs Section -->
+      <div id="logs" class="section">
+        <h2>System Activity Logs</h2>
+        <p class="log-count" id="log-count">Loading logs...</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Timestamp</th>
+              <th>Action</th>
+              <th>Operator</th>
+              <th>Details</th>
+            </tr>
+          </thead>
+          <tbody id="logs-body"></tbody>
+        </table>
+        <div class="actions">
+          <button onclick="loadLogs()">Refresh Logs</button>
+        </div>
       </div>
-    </div>
-  </main>
+    </main>
 
-  <footer>
-    &copy; 2025 Zero Trust CPS Project | All Rights Reserved
-  </footer>
+    <footer>
+      &copy; 2025 Zero Trust CPS Project | All Rights Reserved
+    </footer>
+  </div>
 
   <script>
-    function showSection(sectionId) {
+    let currentToken = null;
+    let currentUser = null;
+
+    document.addEventListener('DOMContentLoaded', function () {
       document.querySelectorAll('.section').forEach(sec => sec.classList.remove('active'));
-      document.getElementById(sectionId).classList.add('active');
-      if (sectionId === 'logs') {
-        loadLogs();
+      document.getElementById('login').classList.add('active');
+    });
+
+    function performLogin() {
+      const username = document.getElementById('login-username').value;
+      const password = document.getElementById('login-password').value;
+      const errorElement = document.getElementById('login-error');
+
+      errorElement.textContent = '';
+
+      if (!username || !password) {
+        errorElement.textContent = 'Please enter both username and password';
+        return;
       }
+
+      fetch("http://localhost:5000/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password })
+      })
+      .then(response => {
+        if (!response.ok) throw new Error("Login failed");
+        return response.json();
+      })
+      .then(data => {
+        currentToken = data.token;
+        currentUser = data.user;
+
+        const heading = document.getElementById('ui-heading');
+        const controlBtn = document.getElementById('control-btn');
+        const logsBtn = document.getElementById('logs-btn');
+
+        if (currentUser.role === 'admin') {
+          heading.textContent = "Zero Trust CPS Admin UI";
+          controlBtn.style.display = 'inline-block';
+          logsBtn.style.display = 'inline-block';
+        } else {
+          heading.textContent = "Zero Trust CPS Operator UI";
+          controlBtn.style.display = 'none';
+          logsBtn.style.display = 'none';
+        }
+
+        document.getElementById('login').classList.remove('active');
+        document.getElementById('app').classList.add('active');
+        document.getElementById('dashboard').classList.add('active');
+
+        refreshDashboard();
+      })
+      .catch(error => {
+        errorElement.textContent = "Invalid credentials. Please try again.";
+        console.error("Login error:", error);
+      });
+    }
+
+    function logout() {
+      currentToken = null;
+      currentUser = null;
+      document.getElementById('app').classList.remove('active');
+      document.getElementById('login').classList.add('active');
+      document.getElementById('login-username').value = '';
+      document.getElementById('login-password').value = '';
+      document.querySelectorAll('#app .section').forEach(sec => sec.classList.remove('active'));
+      // Reset nav buttons for next login
+      document.getElementById('control-btn').style.display = 'inline-block';
+      document.getElementById('logs-btn').style.display = 'inline-block';
+    }
+
+    function showSection(sectionId) {
+      if (!currentToken) {
+        alert("Please login first");
+        return;
+      }
+      document.querySelectorAll('#app .section').forEach(sec => sec.classList.remove('active'));
+      document.getElementById(sectionId).classList.add('active');
+      if (sectionId === 'logs') loadLogs();
+    }
+
+    function validateToken() {
+      if (!currentToken) return Promise.reject("No token");
+      return fetch("http://localhost:5000/validate", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${currentToken}` }
+      }).then(res => {
+        if (!res.ok) throw new Error("Token validation failed");
+        return res.json();
+      });
+    }
+
+    function fetchWithAuth(url, options = {}) {
+      if (!currentToken) return Promise.reject("Not authenticated");
+      const headers = { ...options.headers, "Authorization": `Bearer ${currentToken}` };
+      return fetch(url, { ...options, headers });
     }
 
     function refreshDashboard() {
-      fetch("http://localhost:5001/read")
-        .then(res => res.json())
-        .then(data => {
-          document.getElementById("temp-value").textContent = data.temperature ?? '--';
-        })
-        .catch(() => {
-          document.getElementById("temp-value").textContent = 'ERR';
-        });
+      fetchWithAuth("http://localhost:5001/read").then(res => res.json()).then(data => {
+        document.getElementById("temp-value").textContent = data.temperature ?? '--';
+      }).catch(() => document.getElementById("temp-value").textContent = 'ERR');
 
-      fetch("http://localhost:5002/read")
-        .then(res => res.json())
-        .then(data => {
-          document.getElementById("pressure-value").textContent = data.pressure ?? '--';
-        })
-        .catch(() => {
-          document.getElementById("pressure-value").textContent = 'ERR';
-        });
+      fetchWithAuth("http://localhost:5002/read").then(res => res.json()).then(data => {
+        document.getElementById("pressure-value").textContent = data.pressure ?? '--';
+      }).catch(() => document.getElementById("pressure-value").textContent = 'ERR');
 
-      fetch("http://localhost:5003/read")
-        .then(res => res.json())
-        .then(data => {
-          document.getElementById("voltage-value").textContent = data.voltage ?? '--';
-        })
-        .catch(() => {
-          document.getElementById("voltage-value").textContent = 'ERR';
-        });
+      fetchWithAuth("http://localhost:5003/read").then(res => res.json()).then(data => {
+        document.getElementById("voltage-value").textContent = data.voltage ?? '--';
+      }).catch(() => document.getElementById("voltage-value").textContent = 'ERR');
 
-      fetch("http://localhost:5004/status")
-        .then(res => res.json())
-        .then(data => {
-          document.getElementById("actuator-status").textContent = data.status ?? '--';
-        })
-        .catch(() => {
-          document.getElementById("actuator-status").textContent = 'ERR';
-        });
+      fetchWithAuth("http://localhost:5004/status").then(res => res.json()).then(data => {
+        document.getElementById("actuator-status").textContent = data.status ?? '--';
+      }).catch(() => document.getElementById("actuator-status").textContent = 'ERR');
     }
 
     function submitCommand() {
+      if (!currentToken) {
+        alert("Please login first");
+        return;
+      }
       const action = document.getElementById('action-select').value;
-      const token = document.getElementById('operator-token').value;
-      const response = document.getElementById('response');
-
+      const responseElement = document.getElementById('response');
       if (!action) {
         alert("Please select an action.");
         return;
       }
-
-      if (!token) {
-        alert("Please enter your operator token.");
-        return;
-      }
-
-      fetch("http://localhost:5004/toggle", {
-        method: "POST"
-      })
-        .then(res => res.json())
-        .then(data => {
-          response.style.color = 'green';
-          response.textContent = `✅ Actuator toggled to '${data.status}'`;
-          refreshDashboard();
-        })
-        .catch(() => {
-          response.style.color = 'red';
-          response.textContent = "❌ Failed to toggle actuator.";
-        });
+      responseElement.textContent = "Processing...";
+      validateToken().then(() => {
+        if (action === "toggle") {
+          return fetchWithAuth("http://localhost:5004/toggle", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+          });
+        }
+      }).then(res => {
+        if (!res.ok) throw new Error("Command failed");
+        return res.json();
+      }).then(() => {
+        responseElement.textContent = "Command executed successfully!";
+        refreshDashboard();
+      }).catch(err => {
+        responseElement.textContent = "Error: " + err.message;
+      });
     }
 
     function loadLogs() {
-      const logs = [
+      const mockLogs = [
         {
-          timestamp: "2025-07-01 12:45:22",
-          action: "Actuator ON",
-          operator: "Operator123",
-          details: "Manual override of actuator A1"
+          timestamp: new Date().toISOString(),
+          action: "System initialized",
+          operator: "system",
+          details: "Zero Trust CPS started"
         },
         {
-          timestamp: "2025-07-01 12:42:05",
-          action: "Sensor Voltage Read",
-          operator: "SensorNode02",
-          details: "Voltage = 220V"
-        },
-        {
-          timestamp: "2025-07-01 12:40:10",
-          action: "Authentication",
-          operator: "Operator123",
-          details: "Token verified successfully"
-        },
-        {
-          timestamp: "2025-07-01 12:38:55",
-          action: "Actuator OFF",
-          operator: "Operator456",
-          details: "Shutdown actuator B2"
+          timestamp: new Date(Date.now() - 100000).toISOString(),
+          action: "Actuator toggled",
+          operator: currentUser?.username || "unknown",
+          details: "Actuator state changed to ON"
         }
       ];
-
       const tbody = document.getElementById("logs-body");
-      const logCount = document.getElementById("log-count");
-
       tbody.innerHTML = "";
-      logs.forEach(log => {
-        const row = `
-          <tr>
-            <td>${log.timestamp}</td>
-            <td>${log.action}</td>
-            <td>${log.operator}</td>
-            <td>${log.details}</td>
-          </tr>
-        `;
-        tbody.innerHTML += row;
+      mockLogs.forEach(log => {
+        tbody.innerHTML += `<tr>
+          <td>${new Date(log.timestamp).toLocaleString()}</td>
+          <td>${log.action}</td>
+          <td>${log.operator}</td>
+          <td>${log.details}</td>
+        </tr>`;
       });
-
-      logCount.textContent = `${logs.length} logs loaded.`;
+      document.getElementById("log-count").textContent = `${mockLogs.length} logs loaded`;
     }
-
-    // Load dashboard on page load
-    refreshDashboard();
   </script>
-
 </body>
 </html>

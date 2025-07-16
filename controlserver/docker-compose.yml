@@ -1,6 +1,11 @@
 version: '3'
 
 services:
+  auth:
+    build: ../authentication-server/
+    ports:
+      - "5000:5000"
+    working_dir: /app
   sensor_temp:
     build: ./sensor_temp
     volumes:
@@ -11,8 +16,6 @@ services:
 
   sensor_pressure:
     build: ./sensor_pressure
-    volumes:
-      - ./sensor_pressure:/app
     ports:
       - "5002:5002"
     working_dir: /app
@@ -38,8 +41,9 @@ services:
     volumes:
       - ./ui:/app
     ports:
-      - "5000:5000"
+      - "3000:3000"  # Changed from 5000 since auth uses 5000
     depends_on:
+      - auth
       - sensor_temp
       - sensor_pressure
       - sensor_voltage
